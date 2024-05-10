@@ -363,6 +363,10 @@ private:
   /// The function's serialized attribute.
   bool Serialized : 1;
 
+  /// [serialized_for_package] attribute if package serialization
+  /// is enabled.
+  bool SerializedForPackage : 1;
+
   /// Specifies if this function is a thunk or a reabstraction thunk.
   ///
   /// The inliner uses this information to avoid inlining (non-trivial)
@@ -1136,6 +1140,13 @@ public:
     Serialized = isSerialized;
     assert(this->isSerialized() == isSerialized &&
            "too few bits for Serialized storage");
+  }
+
+  IsSerializedForPackage_t isSerializedForPackage() const {
+    return IsSerializedForPackage_t(SerializedForPackage);
+  }
+  void setSerializedForPackage(IsSerializedForPackage_t isSerializedForPackage) {
+    SerializedForPackage = isSerializedForPackage;
   }
 
   /// Get this function's thunk attribute.

@@ -665,7 +665,8 @@ void SILParser::convertRequirements(ArrayRef<RequirementRepr> From,
 }
 
 static bool parseDeclSILOptional(
-    bool *isTransparent, IsSerialized_t *isSerialized, bool *isCanonical,
+    bool *isTransparent, IsSerialized_t *isSerialized,
+    IsSerializedForPackage_t *isSerializedForPackage, bool *isCanonical,
     bool *hasOwnershipSSA, bool *hasResultDependsOnSelf, IsThunk_t *isThunk,
     IsDynamicallyReplaceable_t *isDynamic, IsDistributed_t *isDistributed,
     IsRuntimeAccessible_t *isRuntimeAccessible,
@@ -697,6 +698,8 @@ static bool parseDeclSILOptional(
       *isTransparent = true;
     else if (isSerialized && SP.P.Tok.getText() == "serialized")
       *isSerialized = IsSerialized;
+    else if (isSerializedForPackage && SP.P.Tok.getText() == "serialized_for_package")
+      *isSerializedForPackage = IsSerializedForPackage;
     else if (isDynamic && SP.P.Tok.getText() == "dynamically_replacable")
       *isDynamic = IsDynamic;
     else if (isDistributed && SP.P.Tok.getText() == "distributed")
@@ -7106,6 +7109,7 @@ bool SILParserState::parseDeclSIL(Parser &P) {
 
   bool isTransparent = false;
   IsSerialized_t isSerialized = IsNotSerialized;
+  IsSerializedForPackage_t isSerializedForPackage = IsNotSerializedForPackage;
   bool isCanonical = false;
   IsDynamicallyReplaceable_t isDynamic = IsNotDynamic;
   IsDistributed_t isDistributed = IsNotDistributed;
@@ -7138,8 +7142,9 @@ bool SILParserState::parseDeclSIL(Parser &P) {
   Identifier objCReplacementFor;
   if (parseSILLinkage(FnLinkage, P) ||
       parseDeclSILOptional(
-          &isTransparent, &isSerialized, &isCanonical, &hasOwnershipSSA,
-          &hasResultDependsOnSelf, &isThunk, &isDynamic, &isDistributed,
+          &isTransparent, &isSerialized, &isSerializedForPackage,
+          &isCanonical, &hasOwnershipSSA, &hasResultDependsOnSelf,
+          &isThunk, &isDynamic, &isDistributed,
           &isRuntimeAccessible, &forceEnableLexicalLifetimes,
           &useStackForPackMetadata, &hasUnsafeNonEscapableResult,
           &isExactSelfClass, &DynamicallyReplacedFunction,
@@ -7173,6 +7178,7 @@ bool SILParserState::parseDeclSIL(Parser &P) {
     FunctionState.F->setBare(IsBare);
     FunctionState.F->setTransparent(IsTransparent_t(isTransparent));
     FunctionState.F->setSerialized(IsSerialized_t(isSerialized));
+    FunctionState.F->setSerializedForPackage(IsSerializedForPackage_t(isSerializedForPackage));
     FunctionState.F->setWasDeserializedCanonical(isCanonical);
     if (!hasOwnershipSSA)
       FunctionState.F->setOwnershipEliminated();
@@ -7396,13 +7402,12 @@ bool SILParserState::parseSILGlobal(Parser &P) {
 
   SILParser State(P);
   if (parseSILLinkage(GlobalLinkage, P) ||
-      parseDeclSILOptional(nullptr, &isSerialized, nullptr, nullptr, nullptr,
+      parseDeclSILOptional(nullptr, &isSerialized, nullptr, nullptr, nullptr, nullptr,
                            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
                            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-                           nullptr,
-                           nullptr, nullptr, nullptr, nullptr, nullptr, &isLet,
                            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-                           nullptr, nullptr, State, M) ||
+                           &isLet, nullptr, nullptr, nullptr, nullptr, nullptr,
+                           nullptr, nullptr, nullptr, State, M) ||
       P.parseToken(tok::at_sign, diag::expected_sil_value_name) ||
       P.parseIdentifier(GlobalName, NameLoc, /*diagnoseDollarPrefix=*/false,
                         diag::expected_sil_value_name) ||
@@ -7449,12 +7454,13 @@ bool SILParserState::parseSILProperty(Parser &P) {
   SILParser SP(P);
   
   IsSerialized_t Serialized = IsNotSerialized;
-  if (parseDeclSILOptional(nullptr, &Serialized, nullptr, nullptr, nullptr,
+  if (parseDeclSILOptional(nullptr, &Serialized, nullptr, nullptr,
+                           nullptr, nullptr, nullptr, nullptr, nullptr,
                            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
                            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
                            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
                            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-                           nullptr, nullptr, nullptr, SP, M))
+                           SP, M))
     return true;
   
   ValueDecl *VD;
@@ -7524,7 +7530,7 @@ bool SILParserState::parseSILVTable(Parser &P) {
                            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
                            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
                            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-                           nullptr, nullptr, nullptr, VTableState, M))
+                           nullptr, nullptr, nullptr, nullptr, VTableState, M))
     return true;
 
 
@@ -7642,7 +7648,7 @@ bool SILParserState::parseSILMoveOnlyDeinit(Parser &parser) {
   SILParser moveOnlyDeinitTableState(parser);
 
   IsSerialized_t Serialized = IsNotSerialized;
-  if (parseDeclSILOptional(nullptr, &Serialized, nullptr, nullptr, nullptr,
+  if (parseDeclSILOptional(nullptr, &Serialized, nullptr, nullptr, nullptr, nullptr,
                            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
                            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
                            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
@@ -8129,7 +8135,7 @@ bool SILParserState::parseSILWitnessTable(Parser &P) {
   parseSILLinkage(Linkage, P);
   
   IsSerialized_t isSerialized = IsNotSerialized;
-  if (parseDeclSILOptional(nullptr, &isSerialized, nullptr, nullptr, nullptr,
+  if (parseDeclSILOptional(nullptr, &isSerialized, nullptr, nullptr, nullptr, nullptr,
                            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
                            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
                            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,

@@ -10,7 +10,7 @@
 // RUN: %target-sil-opt %t/Lib.swiftmodule -sil-verify-all -o %t/Lib-non-res.sil
 // RUN: %FileCheck %s --check-prefixes=CHECK-COMMON,CHECK-NONRES < %t/Lib-non-res.sil
 
-// RUN: %target-build-swift -module-name=Main -package-name Pkg -I%t -emit-sil %t/main.swift -o %t/Main-non-res.sil
+// RUN: %target-build-swift -module-name=Main -package-name Pkg -I%t -emit-sil -O %t/main.swift -o %t/Main-non-res.sil
 // RUN: %FileCheck %s --check-prefixes=CHECK-MAIN-COMMON,CHECK-MAIN-NONRES < %t/Main-non-res.sil
 
 // RUN: rm -rf %t/Lib.swiftmodule
@@ -24,7 +24,7 @@
 // RUN: %target-sil-opt %t/Lib.swiftmodule -sil-verify-all -o %t/Lib-res.sil
 // RUN: %FileCheck %s --check-prefixes=CHECK-COMMON,CHECK-RES < %t/Lib-res.sil
 
-// RUN: %target-build-swift -module-name=Main -package-name Pkg -I%t -emit-sil %t/main.swift -o %t/Main-res.sil
+// RUN: %target-build-swift -module-name=Main -package-name Pkg -I%t -emit-sil -O %t/main.swift -o %t/Main-res.sil
 // RUN: %FileCheck %s --check-prefixes=CHECK-MAIN-COMMON,CHECK-MAIN-RES < %t/Main-res.sil
 
 // RUN: llvm-bcanalyzer --dump %t/Lib.swiftmodule | %FileCheck %s --check-prefix=CHECK-BC
@@ -100,18 +100,18 @@ runPub(pub)
 print(prevPub)
 
 // PubStruct.init(_:)
-// CHECK-MAIN-RES:    sil @$s3Lib9PubStructVyACSicfC : $@convention(method) (Int, @thin PubStruct.Type) -> @out PubStruct
-// CHECK-MAIN-NONRES: sil @$s3Lib9PubStructVyACSicfC : $@convention(method) (Int, @thin PubStruct.Type) -> PubStruct
+// CHECK-MAIN-RES:    sil [serialized_for_package] @$s3Lib9PubStructVyACSicfC : $@convention(method) (Int, @thin PubStruct.Type) -> @out PubStruct
+// CHECK-MAIN-NONRES: sil [serialized_for_package] @$s3Lib9PubStructVyACSicfC : $@convention(method) (Int, @thin PubStruct.Type) -> PubStruct
 
 // PubStruct.fooVar.getter
-// CHECK-MAIN-RES: sil @$s3Lib9PubStructV6fooVarSivg : $@convention(method) (@in_guaranteed PubStruct) -> Int
+// CHECK-MAIN-RES: sil [serialized_for_package] @$s3Lib9PubStructV6fooVarSivg : $@convention(method) (@in_guaranteed PubStruct) -> Int
 
 // PubStruct.fooVar.setter
-// CHECK-MAIN-RES: sil @$s3Lib9PubStructV6fooVarSivs : $@convention(method) (Int, @inout PubStruct) -> ()
+// CHECK-MAIN-RES: sil [serialized_for_package] @$s3Lib9PubStructV6fooVarSivs : $@convention(method) (Int, @inout PubStruct) -> ()
 
 // runPub(_:)
-// CHECK-MAIN-RES:    sil @$s3Lib6runPubyyAA0C6StructVF : $@convention(thin) (@in_guaranteed PubStruct) -> ()
-// CHECK-MAIN-NONRES: sil @$s3Lib6runPubyyAA0C6StructVF : $@convention(thin) (PubStruct) -> ()
+// CHECK-MAIN-RES:    sil [serialized_for_package] @$s3Lib6runPubyyAA0C6StructVF : $@convention(thin) (@in_guaranteed PubStruct) -> ()
+// CHECK-MAIN-NONRES: sil [serialized_for_package] @$s3Lib6runPubyyAA0C6StructVF : $@convention(thin) (PubStruct) -> ()
 
 var frpub = FrPubStruct(1)
 let prevFrPub = frpub.fooVar
@@ -120,10 +120,10 @@ runFrPub(frpub)
 print(prevFrPub)
 
 // FrPubStruct.init(_:)
-// CHECK-MAIN-COMMON: sil @$s3Lib11FrPubStructVyACSicfC : $@convention(method) (Int, @thin FrPubStruct.Type) -> FrPubStruct
+// CHECK-MAIN-COMMON: sil [serialized_for_package] @$s3Lib11FrPubStructVyACSicfC : $@convention(method) (Int, @thin FrPubStruct.Type) -> FrPubStruct
 
 // runFrPub(_:)
-// CHECK-MAIN-COMMON: sil @$s3Lib8runFrPubyyAA0cD6StructVF : $@convention(thin) (FrPubStruct) -> ()
+// CHECK-MAIN-COMMON: sil [serialized_for_package] @$s3Lib8runFrPubyyAA0cD6StructVF : $@convention(thin) (FrPubStruct) -> ()
 
 var pkg = PkgStruct(1)
 let prevPkg = pkg.fooVar
@@ -132,18 +132,18 @@ runPkg(pkg)
 print(prevPkg)
 
 // PkgStruct.init(_:)
-// CHECK-MAIN-RES:    sil package_external @$s3Lib9PkgStructVyACSicfC : $@convention(method) (Int, @thin PkgStruct.Type) -> @out PkgStruct
-// CHECK-MAIN-NONRES: sil package_external @$s3Lib9PkgStructVyACSicfC : $@convention(method) (Int, @thin PkgStruct.Type) -> PkgStruct
+// CHECK-MAIN-RES:    sil package_external [serialized_for_package] @$s3Lib9PkgStructVyACSicfC : $@convention(method) (Int, @thin PkgStruct.Type) -> @out PkgStruct
+// CHECK-MAIN-NONRES: sil package_external [serialized_for_package] @$s3Lib9PkgStructVyACSicfC : $@convention(method) (Int, @thin PkgStruct.Type) -> PkgStruct
 
 // PkgStruct.fooVar.getter
-// CHECK-MAIN-RES: sil package_external @$s3Lib9PkgStructV6fooVarSivg : $@convention(method) (@in_guaranteed PkgStruct) -> Int
+// CHECK-MAIN-RES: sil package_external [serialized_for_package] @$s3Lib9PkgStructV6fooVarSivg : $@convention(method) (@in_guaranteed PkgStruct) -> Int
 
 // PkgStruct.fooVar.setter
-// CHECK-MAIN-RES: sil package_external @$s3Lib9PkgStructV6fooVarSivs : $@convention(method) (Int, @inout PkgStruct) -> ()
+// CHECK-MAIN-RES: sil package_external [serialized_for_package] @$s3Lib9PkgStructV6fooVarSivs : $@convention(method) (Int, @inout PkgStruct) -> ()
 
 // runPkg(_:)
-// CHECK-MAIN-RES:    sil package_external @$s3Lib6runPkgyyAA0C6StructVF : $@convention(thin) (@in_guaranteed PkgStruct) -> ()
-// CHECK-MAIN-NONRES: sil package_external @$s3Lib6runPkgyyAA0C6StructVF : $@convention(thin) (PkgStruct) -> ()
+// CHECK-MAIN-RES:    sil package_external [serialized_for_package] @$s3Lib6runPkgyyAA0C6StructVF : $@convention(thin) (@in_guaranteed PkgStruct) -> ()
+// CHECK-MAIN-NONRES: sil package_external [serialized_for_package] @$s3Lib6runPkgyyAA0C6StructVF : $@convention(thin) (PkgStruct) -> ()
 
 var pubKlass = PubKlass(2)
 let prevPubData = pubKlass.data
@@ -152,10 +152,10 @@ runPubKlass(pubKlass)
 print(prevPubData)
 
 // PubKlass.__allocating_init(_:)
-// CHECK-MAIN-COMMON: sil @$s3Lib8PubKlassCyACSicfC : $@convention(method) (Int, @thick PubKlass.Type) -> @owned PubKlass
+// CHECK-MAIN-COMMON: sil [serialized_for_package] @$s3Lib8PubKlassCyACSicfC : $@convention(method) (Int, @thick PubKlass.Type) -> @owned PubKlass
 
 // runPubKlass(_:)
-// CHECK-MAIN-COMMON: sil @$s3Lib11runPubKlassyyAA0cD0CF : $@convention(thin) (@guaranteed PubKlass) -> ()
+// CHECK-MAIN-COMMON: sil [serialized_for_package] @$s3Lib11runPubKlassyyAA0cD0CF : $@convention(thin) (@guaranteed PubKlass) -> ()
 
 var pkgKlass = PkgKlass(2)
 let prevPkgData = pkgKlass.data
@@ -164,24 +164,24 @@ runPkgKlass(pkgKlass)
 print(prevPkgData)
 
 // PkgKlass.__allocating_init(_:)
-// CHECK-MAIN-COMMON: sil package_external @$s3Lib8PkgKlassCyACSicfC : $@convention(method) (Int, @thick PkgKlass.Type) -> @owned PkgKlass
+// CHECK-MAIN-COMMON: sil package_external [serialized_for_package] @$s3Lib8PkgKlassCyACSicfC : $@convention(method) (Int, @thick PkgKlass.Type) -> @owned PkgKlass
 
 // runPkgKlass(_:)
-// CHECK-MAIN-COMMON: sil package_external @$s3Lib11runPkgKlassyyAA0cD0CF : $@convention(thin) (@guaranteed PkgKlass) -> ()
+// CHECK-MAIN-COMMON: sil package_external [serialized_for_package] @$s3Lib11runPkgKlassyyAA0cD0CF : $@convention(thin) (@guaranteed PkgKlass) -> ()
 
 
 //--- Lib.swift
 
 public struct PubStruct {
   // PubStruct.foovar.getter
-  // CHECK-RES-DAG: sil [serialized] [canonical] @$s3Lib9PubStructV6fooVarSivg : $@convention(method) (@in_guaranteed PubStruct) -> Int {
+  // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [canonical] @$s3Lib9PubStructV6fooVarSivg : $@convention(method) (@in_guaranteed PubStruct) -> Int {
   // CHECK-NONRES-DAG: sil [transparent] [serialized] [canonical] [ossa] @$s3Lib9PubStructV6fooVarSivg : $@convention(method) (PubStruct) -> Int
   // CHECK-RES-DAG: [[FIELD:%.*]] = struct_element_addr %0 : $*PubStruct, #PubStruct.fooVar
   // CHECK-RES-DAG: load [[FIELD]] : $*Int
   // CHECK-NONRES-DAG = struct_extract %0 : $PubStruct, #PubStruct.fooVar
 
   // PubStruct.foovar.setter
-  // CHECK-RES-DAG: sil [serialized] [canonical] @$s3Lib9PubStructV6fooVarSivs : $@convention(method) (Int, @inout PubStruct) -> () {
+  // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [canonical] @$s3Lib9PubStructV6fooVarSivs : $@convention(method) (Int, @inout PubStruct) -> () {
   // CHECK-NONRES-DAG: sil [transparent] [serialized] [canonical] [ossa] @$s3Lib9PubStructV6fooVarSivs : $@convention(method) (Int, @inout PubStruct) -> () {
 
   /// NOTE: `struct $PubStruct` in [serialized] function is legal only if package serialization is enabled.
@@ -190,14 +190,14 @@ public struct PubStruct {
   // CHECK-NONRES-DAG:  store [[FIELD]] to [trivial] {{.*}} : $*PubStruct
 
   // PubStruct.foovar.modify
-  // CHECK-RES-DAG: sil [serialized] [canonical] @$s3Lib9PubStructV6fooVarSivM : $@yield_once @convention(method) (@inout PubStruct) -> @yields @inout Int {
+  // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [canonical] @$s3Lib9PubStructV6fooVarSivM : $@yield_once @convention(method) (@inout PubStruct) -> @yields @inout Int {
   // CHECK-NONRES-DAG: sil [transparent] [serialized] [canonical] [ossa] @$s3Lib9PubStructV6fooVarSivM : $@yield_once @convention(method) (@inout PubStruct) -> @yields @inout Int {
   // CHECK-COMMON-DAG: [[FIELD:%.*]] = struct_element_addr %0 : $*PubStruct, #PubStruct.fooVar
   // CHECK-COMMON-DAG: yield [[FIELD]]
   public var fooVar: Int
 
   public init(_ arg: Int) {
-    // CHECK-RES-DAG: sil [serialized] [canonical] @$s3Lib9PubStructVyACSicfC : $@convention(method) (Int, @thin PubStruct.Type) -> @out PubStruct {
+    // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [canonical] @$s3Lib9PubStructVyACSicfC : $@convention(method) (Int, @thin PubStruct.Type) -> @out PubStruct {
     // CHECK-NONRES-DAG: sil [serialized] [canonical] @$s3Lib9PubStructVyACSicfC : $@convention(method) (Int, @thin PubStruct.Type) -> PubStruct {
     // CHECK-COMMON-DAG: [[FIELD:%.*]] = struct $PubStruct
     // CHECK-RES-DAG: store [[FIELD]] to %0 : $*PubStruct
@@ -205,14 +205,14 @@ public struct PubStruct {
     fooVar = arg
   }
   public func f() {
-    // CHECK-RES-DAG: sil [serialized] [canonical] @$s3Lib9PubStructV1fyyF : $@convention(method) (@in_guaranteed PubStruct) -> () {
+    // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [canonical] @$s3Lib9PubStructV1fyyF : $@convention(method) (@in_guaranteed PubStruct) -> () {
     // CHECK-NONRES-DAG: sil [serialized] [canonical] @$s3Lib9PubStructV1fyyF : $@convention(method) (PubStruct) -> () {
     print(fooVar)
   }
 }
 
 public func runPub(_ arg: PubStruct) {
-  // CHECK-RES-DAG: sil [serialized] [canonical] @$s3Lib6runPubyyAA0C6StructVF : $@convention(thin) (@in_guaranteed PubStruct) -> () {
+  // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [canonical] @$s3Lib6runPubyyAA0C6StructVF : $@convention(thin) (@in_guaranteed PubStruct) -> () {
   // CHECK-NONRES-DAG: sil [serialized] [canonical] @$s3Lib6runPubyyAA0C6StructVF : $@convention(thin) (PubStruct) -> () {
   print(arg)
 }
@@ -220,61 +220,67 @@ public func runPub(_ arg: PubStruct) {
 @frozen
 public struct FrPubStruct {
   // FrPubStruct.fooVar.getter
-  // CHECK-COMMON-DAG: sil [transparent] [serialized] [canonical] [ossa] @$s3Lib11FrPubStructV6fooVarSivg : $@convention(method) (FrPubStruct) -> Int {
+  // CHECK-RES-DAG: sil [transparent] [serialized] [serialized_for_package] [canonical] [ossa] @$s3Lib11FrPubStructV6fooVarSivg : $@convention(method) (FrPubStruct) -> Int {
+  // CHECK-NONRES-DAG: sil [transparent] [serialized] [canonical] [ossa] @$s3Lib11FrPubStructV6fooVarSivg : $@convention(method) (FrPubStruct) -> Int {
   // CHECK-COMMON-DAG: [[FIELD:%.*]] = struct_extract %0 : $FrPubStruct, #FrPubStruct.fooVar
   // CHECK-COMMON-DAG: return [[FIELD]] : $Int
 
   // FrPubStruct.fooVar.setter
-  // CHECK-COMMON-DAG: sil [transparent] [serialized] [canonical] [ossa] @$s3Lib11FrPubStructV6fooVarSivs : $@convention(method) (Int, @inout FrPubStruct) -> () {
+  // CHECK-RES-DAG: sil [transparent] [serialized] [serialized_for_package] [canonical] [ossa] @$s3Lib11FrPubStructV6fooVarSivs : $@convention(method) (Int, @inout FrPubStruct) -> () {
+  // CHECK-NONRES-DAG: sil [transparent] [serialized] [canonical] [ossa] @$s3Lib11FrPubStructV6fooVarSivs : $@convention(method) (Int, @inout FrPubStruct) -> () {
   // CHECK-COMMON-DAG:  [[FIELD:%.*]] = struct $FrPubStruct
   // CHECK-COMMON-DAG:  store [[FIELD]] to [trivial] {{.*}} : $*FrPubStruct
 
   // FrPubStruct.fooVar.modify
-  // CHECK-COMMON-DAG: sil [transparent] [serialized] [canonical] [ossa] @$s3Lib11FrPubStructV6fooVarSivM : $@yield_once @convention(method) (@inout FrPubStruct) -> @yields @inout Int {
+  // CHECK-RES-DAG: sil [transparent] [serialized] [serialized_for_package] [canonical] [ossa] @$s3Lib11FrPubStructV6fooVarSivM : $@yield_once @convention(method) (@inout FrPubStruct) -> @yields @inout Int {
+  // CHECK-NONRES-DAG: sil [transparent] [serialized] [canonical] [ossa] @$s3Lib11FrPubStructV6fooVarSivM : $@yield_once @convention(method) (@inout FrPubStruct) -> @yields @inout Int {
   // CHECK-COMMON-DAG: [[FIELD:%.*]] = struct_element_addr %0 : $*FrPubStruct, #FrPubStruct.fooVar
   // CHECK-COMMON-DAG: yield [[FIELD]]
   public var fooVar: Int
 
   public init(_ arg: Int) {
-    // CHECK-COMMON-DAG: sil [serialized] [canonical] @$s3Lib11FrPubStructVyACSicfC : $@convention(method) (Int, @thin FrPubStruct.Type) -> FrPubStruct {
+    // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [canonical] @$s3Lib11FrPubStructVyACSicfC : $@convention(method) (Int, @thin FrPubStruct.Type) -> FrPubStruct {
+    // CHECK-NONRES-DAG: sil [serialized] [canonical] @$s3Lib11FrPubStructVyACSicfC : $@convention(method) (Int, @thin FrPubStruct.Type) -> FrPubStruct {
     // CHECK-COMMON-DAG: [[FIELD:%.*]] = struct $FrPubStruct
     // CHECK-COMMON-DAG: return [[FIELD]] : $FrPubStruct
     fooVar = arg
   }
   public func f() {
+    // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [canonical] @$s3Lib11FrPubStructV1fyyF : $@convention(method) (FrPubStruct) -> () {
     // CHECK-NONRES-DAG: sil [serialized] [canonical] @$s3Lib11FrPubStructV1fyyF : $@convention(method) (FrPubStruct) -> () {
     print(fooVar)
   }
 }
 public func runFrPub(_ arg: FrPubStruct) {
+  // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [canonical] @$s3Lib8runFrPubyyAA0cD6StructVF : $@convention(thin) (FrPubStruct) -> () {
   // CHECK-NONRES-DAG: sil [serialized] [canonical] @$s3Lib8runFrPubyyAA0cD6StructVF : $@convention(thin) (FrPubStruct) -> () {
   print(arg)
 }
 
 package struct PkgStruct {
   // PkgStruct.fooVar.getter
-  // CHECK-RES-DAG: sil package [serialized] [canonical] @$s3Lib9PkgStructV6fooVarSivg : $@convention(method) (@in_guaranteed PkgStruct) -> Int {
+  // CHECK-RES-DAG: sil package [serialized] [serialized_for_package] [canonical] @$s3Lib9PkgStructV6fooVarSivg : $@convention(method) (@in_guaranteed PkgStruct) -> Int {
   // CHECK-NONRES-DAG: sil package [transparent] [serialized] [canonical] [ossa] @$s3Lib9PkgStructV6fooVarSivg : $@convention(method) (PkgStruct) -> Int {
   // CHECK-RES-DAG: [[FIELD:%.*]] = struct_element_addr %0 : $*PkgStruct, #PkgStruct.fooVar
   // CHECK-RES-DAG: load [[FIELD]] : $*Int
   // CHECK-NONRES-DAG = struct_extract %0 : $PkgStruct, #PkgStruct.fooVar
 
   // PkgStruct.fooVar.setter
-  // CHECK-RES-DAG: sil package [serialized] [canonical] @$s3Lib9PkgStructV6fooVarSivs : $@convention(method) (Int, @inout PkgStruct) -> () {
+  // CHECK-RES-DAG: sil package [serialized] [serialized_for_package] [canonical] @$s3Lib9PkgStructV6fooVarSivs : $@convention(method) (Int, @inout PkgStruct) -> () {
   // CHECK-NONRES-DAG: sil package [transparent] [serialized] [canonical] [ossa] @$s3Lib9PkgStructV6fooVarSivs : $@convention(method) (Int, @inout PkgStruct) -> () {
   // CHECK-COMMON-DAG:  [[FIELD:%.*]] = struct $PkgStruct
   // CHECK-RES-DAG:  store [[FIELD]] to {{.*}} : $*PkgStruct
   // CHECK-NONRES-DAG:  store [[FIELD]] to [trivial] {{.*}} : $*PkgStruct
 
   // PkgStruct.fooVar.modify
-  // CHECK-RES-DAG: sil package [serialized] [canonical] @$s3Lib9PkgStructV6fooVarSivM : $@yield_once @convention(method) (@inout PkgStruct) -> @yields @inout Int {
+  // CHECK-RES-DAG: sil package [serialized] [serialized_for_package] [canonical] @$s3Lib9PkgStructV6fooVarSivM : $@yield_once @convention(method) (@inout PkgStruct) -> @yields @inout Int {
   // CHECK-NONRES-DAG: sil package [transparent] [serialized] [canonical] [ossa] @$s3Lib9PkgStructV6fooVarSivM : $@yield_once @convention(method) (@inout PkgStruct) -> @yields @inout Int {
   // CHECK-COMMON-DAG: [[FIELD:%.*]] = struct_element_addr %0 : $*PkgStruct, #PkgStruct.fooVar
   // CHECK-COMMON-DAG: yield [[FIELD]]
   package var fooVar: Int
 
   package init(_ arg: Int) {
-    // CHECK-RES-DAG: sil package [serialized] [canonical] @$s3Lib9PkgStructVyACSicfC : $@convention(method) (Int, @thin PkgStruct.Type) -> @out PkgStruct {
+    // CHECK-RES-DAG: sil package [serialized] [serialized_for_package] [canonical] @$s3Lib9PkgStructVyACSicfC : $@convention(method) (Int, @thin PkgStruct.Type) -> @out PkgStruct {
     // CHECK-NONRES-DAG: sil package [serialized] [canonical] @$s3Lib9PkgStructVyACSicfC : $@convention(method) (Int, @thin PkgStruct.Type) -> PkgStruct {
     // CHECK-COMMON-DAG: [[FIELD:%.*]] = struct $PkgStruct
     // CHECK-RES-DAG: store [[FIELD]] to %0 : $*PkgStruct
@@ -282,14 +288,14 @@ package struct PkgStruct {
     fooVar = arg
   }
   package func f() {
-    // CHECK-RES-DAG: sil package [serialized] [canonical] @$s3Lib9PkgStructV1fyyF : $@convention(method) (@in_guaranteed PkgStruct) -> () {
+    // CHECK-RES-DAG: sil package [serialized] [serialized_for_package] [canonical] @$s3Lib9PkgStructV1fyyF : $@convention(method) (@in_guaranteed PkgStruct) -> () {
     // CHECK-NONRES-DAG: sil package [serialized] [canonical] @$s3Lib9PkgStructV1fyyF : $@convention(method) (PkgStruct) -> () {
     print(fooVar)
   }
 }
 
 package func runPkg(_ arg: PkgStruct) {
-  // CHECK-RES-DAG: sil package [serialized] [canonical] @$s3Lib6runPkgyyAA0C6StructVF : $@convention(thin) (@in_guaranteed PkgStruct) -> () {
+  // CHECK-RES-DAG: sil package [serialized] [serialized_for_package] [canonical] @$s3Lib6runPkgyyAA0C6StructVF : $@convention(thin) (@in_guaranteed PkgStruct) -> () {
   // CHECK-NONRES-DAG: sil package [serialized] [canonical] @$s3Lib6runPkgyyAA0C6StructVF : $@convention(thin) (PkgStruct) -> () {
   print(arg)
 }
@@ -300,31 +306,43 @@ public protocol PubProto {
 }
 
 public class PubKlass: PubProto {
-  // CHECK-COMMON-DAG: sil shared [transparent] [serialized] [thunk] [canonical] [ossa] @$s3Lib8PubKlassCAA0B5ProtoA2aDP4dataSivgTW : $@convention(witness_method: PubProto) (@in_guaranteed PubKlass) -> Int {
-  // CHECK-COMMON-DAG: sil shared [transparent] [serialized] [thunk] [canonical] [ossa] @$s3Lib8PubKlassCAA0B5ProtoA2aDP4dataSivMTW : $@yield_once @convention(witness_method: PubProto) @substituted <τ_0_0> (@inout τ_0_0) -> @yields @inout Int for <PubKlass> {
-  // CHECK-COMMON-DAG: sil shared [transparent] [serialized] [thunk] [canonical] [ossa] @$s3Lib8PubKlassCAA0B5ProtoA2aDP4dataSivsTW : $@convention(witness_method: PubProto) (Int, @inout PubKlass) -> () {
-  // CHECK-RES-DAG: sil [serialized] [canonical] @$s3Lib8PubKlassC4dataSivg : $@convention(method) (@guaranteed PubKlass) -> Int
+  // CHECK-RES-DAG: sil shared [transparent] [serialized] [serialized_for_package] [thunk] [canonical] [ossa] @$s3Lib8PubKlassCAA0B5ProtoA2aDP4dataSivgTW : $@convention(witness_method: PubProto) (@in_guaranteed PubKlass) -> Int {
+  // CHECK-RES-DAG: sil shared [transparent] [serialized] [serialized_for_package] [thunk] [canonical] [ossa] @$s3Lib8PubKlassCAA0B5ProtoA2aDP4dataSivMTW : $@yield_once @convention(witness_method: PubProto) @substituted <τ_0_0> (@inout τ_0_0) -> @yields @inout Int for <PubKlass> {
+  // CHECK-RES-DAG: sil shared [transparent] [serialized] [serialized_for_package] [thunk] [canonical] [ossa] @$s3Lib8PubKlassCAA0B5ProtoA2aDP4dataSivsTW : $@convention(witness_method: PubProto) (Int, @inout PubKlass) -> () {
+  // CHECK-NONRES-DAG: sil shared [transparent] [serialized] [thunk] [canonical] [ossa] @$s3Lib8PubKlassCAA0B5ProtoA2aDP4dataSivgTW : $@convention(witness_method: PubProto) (@in_guaranteed PubKlass) -> Int {
+  // CHECK-NONRES-DAG: sil shared [transparent] [serialized] [thunk] [canonical] [ossa] @$s3Lib8PubKlassCAA0B5ProtoA2aDP4dataSivMTW : $@yield_once @convention(witness_method: PubProto) @substituted <τ_0_0> (@inout τ_0_0) -> @yields @inout Int for <PubKlass> {
+  // CHECK-NONRES-DAG: sil shared [transparent] [serialized] [thunk] [canonical] [ossa] @$s3Lib8PubKlassCAA0B5ProtoA2aDP4dataSivsTW : $@convention(witness_method: PubProto) (Int, @inout PubKlass) -> () {
+  // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [canonical] @$s3Lib8PubKlassC4dataSivg : $@convention(method) (@guaranteed PubKlass) -> Int
   // CHECK-NONRES-DAG: sil [transparent] [serialized] [canonical] [ossa] @$s3Lib8PubKlassC4dataSivg : $@convention(method) (@guaranteed PubKlass) -> Int {
-  // CHECK-RES-DAG: sil [serialized] [canonical] @$s3Lib8PubKlassC4dataSivs : $@convention(method) (Int, @guaranteed PubKlass) -> () {
+  // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [canonical] @$s3Lib8PubKlassC4dataSivs : $@convention(method) (Int, @guaranteed PubKlass) -> () {
   // CHECK-NONRES-DAG: sil [transparent] [serialized] [canonical] [ossa] @$s3Lib8PubKlassC4dataSivs : $@convention(method) (Int, @guaranteed PubKlass) -> () {
   public var data: Int
   public init(_ arg: Int = 1) {
+    // FIXME: default argument 0 of PubKlass.init(_:) -- should have [serialized_for_package]?
+    // CHECK-RES-DAG: sil non_abi [serialized] [canonical] @$s3Lib8PubKlassCyACSicfcfA_ : $@convention(thin) () -> Int {
+    // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [canonical] @$s3Lib8PubKlassCyACSicfc : $@convention(method) (Int, @owned PubKlass) -> @owned PubKlass {
+    // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [exact_self_class] [canonical] @$s3Lib8PubKlassCyACSicfC : $@convention(method) (Int, @thick PubKlass.Type) -> @owned PubKlass {
+    // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [canonical] @$s3Lib8PubKlassCfD : $@convention(method) (@owned PubKlass) -> () {
+    // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [canonical] @$s3Lib8PubKlassCfd : $@convention(method) (@guaranteed PubKlass) -> @owned Builtin.NativeObject {
     // default argument 0 of PubKlass.init(_:)
-    // CHECK-COMMON-DAG: sil non_abi [serialized] [canonical] @$s3Lib8PubKlassCyACSicfcfA_ : $@convention(thin) () -> Int {
-    // CHECK-COMMON-DAG: sil [serialized] [canonical] @$s3Lib8PubKlassCyACSicfc : $@convention(method) (Int, @owned PubKlass) -> @owned PubKlass {
-    // CHECK-COMMON-DAG: sil [serialized] [exact_self_class] [canonical] @$s3Lib8PubKlassCyACSicfC : $@convention(method) (Int, @thick PubKlass.Type) -> @owned PubKlass {
-    // CHECK-COMMON-DAG: sil [serialized] [canonical] @$s3Lib8PubKlassCfD : $@convention(method) (@owned PubKlass) -> () {
-    // CHECK-COMMON-DAG: sil [serialized] [canonical] @$s3Lib8PubKlassCfd : $@convention(method) (@guaranteed PubKlass) -> @owned Builtin.NativeObject {
+    // CHECK-NONRES-DAG: sil non_abi [serialized] [canonical] @$s3Lib8PubKlassCyACSicfcfA_ : $@convention(thin) () -> Int {
+    // CHECK-NONRES-DAG: sil [serialized] [canonical] @$s3Lib8PubKlassCyACSicfc : $@convention(method) (Int, @owned PubKlass) -> @owned PubKlass {
+    // CHECK-NONRES-DAG: sil [serialized] [exact_self_class] [canonical] @$s3Lib8PubKlassCyACSicfC : $@convention(method) (Int, @thick PubKlass.Type) -> @owned PubKlass {
+    // CHECK-NONRES-DAG: sil [serialized] [canonical] @$s3Lib8PubKlassCfD : $@convention(method) (@owned PubKlass) -> () {
+    // CHECK-NONRES-DAG: sil [serialized] [canonical] @$s3Lib8PubKlassCfd : $@convention(method) (@guaranteed PubKlass) -> @owned Builtin.NativeObject {
     self.data = arg
   }
   public func pubfunc(_ arg: Int) -> Int {
-    // CHECK-COMMON-DAG: sil shared [transparent] [serialized] [thunk] [canonical] [ossa] @$s3Lib8PubKlassCAA0B5ProtoA2aDP7pubfuncyS2iFTW : $@convention(witness_method: PubProto) (Int, @in_guaranteed PubKlass) -> Int {
-    // CHECK-COMMON-DAG: sil [serialized] [canonical] @$s3Lib8PubKlassC7pubfuncyS2iF : $@convention(method) (Int, @guaranteed PubKlass) -> Int {
+    // CHECK-RES-DAG: sil shared [transparent] [serialized] [serialized_for_package] [thunk] [canonical] [ossa] @$s3Lib8PubKlassCAA0B5ProtoA2aDP7pubfuncyS2iFTW : $@convention(witness_method: PubProto) (Int, @in_guaranteed PubKlass) -> Int {
+    // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [canonical] @$s3Lib8PubKlassC7pubfuncyS2iF : $@convention(method) (Int, @guaranteed PubKlass) -> Int {
+    // CHECK-NONRES-DAG: sil shared [transparent] [serialized] [thunk] [canonical] [ossa] @$s3Lib8PubKlassCAA0B5ProtoA2aDP7pubfuncyS2iFTW : $@convention(witness_method: PubProto) (Int, @in_guaranteed PubKlass) -> Int {
+    // CHECK-NONRES-DAG: sil [serialized] [canonical] @$s3Lib8PubKlassC7pubfuncyS2iF : $@convention(method) (Int, @guaranteed PubKlass) -> Int {
     return data + arg
   }
 }
 
 public func runPubKlass(_ arg: PubKlass) {
+  // CHECK-RES-DAG: sil [serialized] [serialized_for_package] [canonical] @$s3Lib11runPubKlassyyAA0cD0CF : $@convention(thin) (@guaranteed PubKlass) -> () {
   // CHECK-NONRES-DAG: sil [serialized] [canonical] @$s3Lib11runPubKlassyyAA0cD0CF : $@convention(thin) (@guaranteed PubKlass) -> () {
   print(arg)
 }
@@ -335,39 +353,49 @@ package protocol PkgProto {
 }
 
 package class PkgKlass: PkgProto {
-  // CHECK-COMMON-DAG: sil shared [transparent] [serialized] [thunk] [canonical] [ossa] @$s3Lib8PkgKlassCAA0B5ProtoA2aDP4dataSivgTW : $@convention(witness_method: PkgProto) (@in_guaranteed PkgKlass) -> Int {
-  // CHECK-COMMON-DAG: sil shared [transparent] [serialized] [thunk] [canonical] [ossa] @$s3Lib8PkgKlassCAA0B5ProtoA2aDP4dataSivsTW : $@convention(witness_method: PkgProto) (Int, @inout PkgKlass) -> () {
-  // CHECK-COMMON-DAG: sil shared [transparent] [serialized] [thunk] [canonical] [ossa] @$s3Lib8PkgKlassCAA0B5ProtoA2aDP4dataSivMTW : $@yield_once @convention(witness_method: PkgProto) @substituted <τ_0_0> (@inout τ_0_0) -> @yields @inout Int for <PkgKlass> {
-  // CHECK-RES-DAG: sil package [serialized] [canonical] @$s3Lib8PkgKlassC4dataSivM : $@yield_once @convention(method) (@guaranteed PkgKlass) -> @yields @inout Int {
+  // CHECK-RES-DAG: sil shared [transparent] [serialized] [serialized_for_package] [thunk] [canonical] [ossa] @$s3Lib8PkgKlassCAA0B5ProtoA2aDP4dataSivgTW : $@convention(witness_method: PkgProto) (@in_guaranteed PkgKlass) -> Int {
+  // CHECK-RES-DAG: sil shared [transparent] [serialized] [serialized_for_package] [thunk] [canonical] [ossa] @$s3Lib8PkgKlassCAA0B5ProtoA2aDP4dataSivsTW : $@convention(witness_method: PkgProto) (Int, @inout PkgKlass) -> () {
+  // CHECK-RES-DAG: sil shared [transparent] [serialized] [serialized_for_package] [thunk] [canonical] [ossa] @$s3Lib8PkgKlassCAA0B5ProtoA2aDP4dataSivMTW : $@yield_once @convention(witness_method: PkgProto) @substituted <τ_0_0> (@inout τ_0_0) -> @yields @inout Int for <PkgKlass> {
+  // CHECK-NONRES-DAG: sil shared [transparent] [serialized] [thunk] [canonical] [ossa] @$s3Lib8PkgKlassCAA0B5ProtoA2aDP4dataSivgTW : $@convention(witness_method: PkgProto) (@in_guaranteed PkgKlass) -> Int {
+  // CHECK-NONRES-DAG: sil shared [transparent] [serialized] [thunk] [canonical] [ossa] @$s3Lib8PkgKlassCAA0B5ProtoA2aDP4dataSivsTW : $@convention(witness_method: PkgProto) (Int, @inout PkgKlass) -> () {
+  // CHECK-NONRES-DAG: sil shared [transparent] [serialized] [thunk] [canonical] [ossa] @$s3Lib8PkgKlassCAA0B5ProtoA2aDP4dataSivMTW : $@yield_once @convention(witness_method: PkgProto) @substituted <τ_0_0> (@inout τ_0_0) -> @yields @inout Int for <PkgKlass> {
+  // CHECK-RES-DAG: sil package [serialized] [serialized_for_package] [canonical] @$s3Lib8PkgKlassC4dataSivM : $@yield_once @convention(method) (@guaranteed PkgKlass) -> @yields @inout Int {
   // CHECK-NONRES-DAG: sil package [transparent] [serialized] [canonical] [ossa] @$s3Lib8PkgKlassC4dataSivM : $@yield_once @convention(method) (@guaranteed PkgKlass) -> @yields @inout Int {
-  // CHECK-RES-DAG: sil package [serialized] [canonical] @$s3Lib8PkgKlassC4dataSivg : $@convention(method) (@guaranteed PkgKlass) -> Int {
+  // CHECK-RES-DAG: sil package [serialized] [serialized_for_package] [canonical] @$s3Lib8PkgKlassC4dataSivg : $@convention(method) (@guaranteed PkgKlass) -> Int {
   // CHECK-NONRES-DAG: sil package [transparent] [serialized] [canonical] [ossa] @$s3Lib8PkgKlassC4dataSivg : $@convention(method) (@guaranteed PkgKlass) -> Int {
-  // CHECK-RES-DAG: sil package [serialized] [canonical] @$s3Lib8PkgKlassC4dataSivs : $@convention(method) (Int, @guaranteed PkgKlass) -> () {
+  // CHECK-RES-DAG: sil package [serialized] [serialized_for_package] [canonical] @$s3Lib8PkgKlassC4dataSivs : $@convention(method) (Int, @guaranteed PkgKlass) -> () {
   // CHECK-NONRES-DAG: sil package [transparent] [serialized] [canonical] [ossa] @$s3Lib8PkgKlassC4dataSivs : $@convention(method) (Int, @guaranteed PkgKlass) -> () {
   package var data: Int
 
   package init(_ arg: Int = 1) {
     // FIXME: package -> package_non_abi for default argument 0 of PkgKlass.init(_:)
-    // CHECK-COMMON-DAG: sil package [serialized] [canonical] @$s3Lib8PkgKlassCyACSicfcfA_ : $@convention(thin) () -> Int {
-    // CHECK-COMMON-DAG: sil package [serialized] [canonical] @$s3Lib8PkgKlassCyACSicfc : $@convention(method) (Int, @owned PkgKlass) -> @owned PkgKlass {
-    // CHECK-COMMON-DAG: sil package [serialized] [exact_self_class] [canonical] @$s3Lib8PkgKlassCyACSicfC : $@convention(method) (Int, @thick PkgKlass.Type) -> @owned PkgKlass {
-    // CHECK-COMMON-DAG: sil package [serialized] [canonical] @$s3Lib8PkgKlassCfd : $@convention(method) (@guaranteed PkgKlass) -> @owned Builtin.NativeObject {
-    // CHECK-COMMON-DAG: sil package [serialized] [canonical] @$s3Lib8PkgKlassCfD : $@convention(method) (@owned PkgKlass) -> ()
+    // CHECK-RES-DAG: sil package [serialized] [serialized_for_package] [canonical] @$s3Lib8PkgKlassCyACSicfcfA_ : $@convention(thin) () -> Int {
+    // CHECK-RES-DAG: sil package [serialized] [serialized_for_package] [canonical] @$s3Lib8PkgKlassCyACSicfc : $@convention(method) (Int, @owned PkgKlass) -> @owned PkgKlass {
+    // CHECK-RES-DAG: sil package [serialized] [serialized_for_package] [exact_self_class] [canonical] @$s3Lib8PkgKlassCyACSicfC : $@convention(method) (Int, @thick PkgKlass.Type) -> @owned PkgKlass {
+    // CHECK-RES-DAG: sil package [serialized] [serialized_for_package] [canonical] @$s3Lib8PkgKlassCfd : $@convention(method) (@guaranteed PkgKlass) -> @owned Builtin.NativeObject {
+    // CHECK-RES-DAG: sil package [serialized] [serialized_for_package] [canonical] @$s3Lib8PkgKlassCfD : $@convention(method) (@owned PkgKlass) -> ()
+    // CHECK-NONRES-DAG: sil package [serialized] [canonical] @$s3Lib8PkgKlassCyACSicfcfA_ : $@convention(thin) () -> Int {
+    // CHECK-NONRES-DAG: sil package [serialized] [canonical] @$s3Lib8PkgKlassCyACSicfc : $@convention(method) (Int, @owned PkgKlass) -> @owned PkgKlass {
+    // CHECK-NONRES-DAG: sil package [serialized] [exact_self_class] [canonical] @$s3Lib8PkgKlassCyACSicfC : $@convention(method) (Int, @thick PkgKlass.Type) -> @owned PkgKlass {
+    // CHECK-NONRES-DAG: sil package [serialized] [canonical] @$s3Lib8PkgKlassCfd : $@convention(method) (@guaranteed PkgKlass) -> @owned Builtin.NativeObject {
+    // CHECK-NONRES-DAG: sil package [serialized] [canonical] @$s3Lib8PkgKlassCfD : $@convention(method) (@owned PkgKlass) -> ()
     self.data = arg
   }
 
   package func pkgfunc(_ arg: Int) -> Int {
-    // CHECK-COMMON-DAG: sil shared [transparent] [serialized] [thunk] [canonical] [ossa] @$s3Lib8PkgKlassCAA0B5ProtoA2aDP7pkgfuncyS2iFTW : $@convention(witness_method: PkgProto) (Int, @in_guaranteed PkgKlass) -> Int {
-    // CHECK-COMMON-DAG: sil package [serialized] [canonical] @$s3Lib8PkgKlassC7pkgfuncyS2iF : $@convention(method) (Int, @guaranteed PkgKlass) -> Int {
+    // CHECK-RES-DAG: sil shared [transparent] [serialized] [serialized_for_package] [thunk] [canonical] [ossa] @$s3Lib8PkgKlassCAA0B5ProtoA2aDP7pkgfuncyS2iFTW : $@convention(witness_method: PkgProto) (Int, @in_guaranteed PkgKlass) -> Int {
+    // CHECK-RES-DAG: sil package [serialized] [serialized_for_package] [canonical] @$s3Lib8PkgKlassC7pkgfuncyS2iF : $@convention(method) (Int, @guaranteed PkgKlass) -> Int {
+    // CHECK-NONRES-DAG: sil shared [transparent] [serialized] [thunk] [canonical] [ossa] @$s3Lib8PkgKlassCAA0B5ProtoA2aDP7pkgfuncyS2iFTW : $@convention(witness_method: PkgProto) (Int, @in_guaranteed PkgKlass) -> Int {
+    // CHECK-NONRES-DAG: sil package [serialized] [canonical] @$s3Lib8PkgKlassC7pkgfuncyS2iF : $@convention(method) (Int, @guaranteed PkgKlass) -> Int {
     return data + arg
   }
 }
 
 package func runPkgKlass(_ arg: PkgKlass) {
+  // CHECK-RES-DAG: sil package [serialized] [serialized_for_package] [canonical] @$s3Lib11runPkgKlassyyAA0cD0CF : $@convention(thin) (@guaranteed PkgKlass) -> () {
   // CHECK-NONRES-DAG: sil package [serialized] [canonical] @$s3Lib11runPkgKlassyyAA0cD0CF : $@convention(thin) (@guaranteed PkgKlass) -> () {
   print(arg)
 }
-
 
 // CHECK-COMMON-LABEL: sil_vtable [serialized] PubKlass {
 // CHECK-COMMON-NEXT:   #PubKlass.data!getter: (PubKlass) -> () -> Int : @$s3Lib8PubKlassC4dataSivg

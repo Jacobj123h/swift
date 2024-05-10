@@ -571,17 +571,25 @@ bool CrossModuleOptimization::shouldSerialize(SILFunction *function) {
   return true;
 }
 
+static void addSerializedForPackageAttrIfEnabled(SILFunction *f, const SILModule &mod) {
+  auto packageOptIn = mod.getOptions().EnableSerializePackage &&
+                      mod.getSwiftModule()->isResilient();
+  f->setSerializedForPackage(packageOptIn ? IsSerializedForPackage : IsNotSerializedForPackage);
+}
+
 /// Serialize \p function and recursively all referenced functions which are
 /// marked in \p canSerializeFlags.
 void CrossModuleOptimization::serializeFunction(SILFunction *function,
                                        const FunctionFlags &canSerializeFlags) {
-  if (function->isSerialized())
+  if (function->isSerialized()) {
+    addSerializedForPackageAttrIfEnabled(function, M);
     return;
-
+  }
   if (!canSerializeFlags.lookup(function))
     return;
 
   function->setSerialized(IsSerialized);
+  addSerializedForPackageAttrIfEnabled(function, M);
 
   for (SILBasicBlock &block : *function) {
     for (SILInstruction &inst : block) {
